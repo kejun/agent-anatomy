@@ -1,13 +1,21 @@
 {
   "name": "agent-anatomy",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Offline interactive mechanical anatomy diagrams and trace replay",
+  "description": "The complete Anatomy drawing kit and craft workflow, with Chinese and code-evidence adaptation",
   "engines": { "node": ">=22" },
   "scripts": {
-    "test": "node scripts/self-test.mjs",
-    "test:browser": "node scripts/browser-test.mjs"
+    "test": "node scripts/verify-upstream.mjs && node scripts/self-test.mjs",
+    "test:browser": "node scripts/browser-test.mjs",
+    "test:upstream": "node scripts/test-upstream.mjs",
+    "build:examples": "node scripts/rebuild-upstream.mjs"
   },
-  "devDependencies": { "playwright": "1.62.1" }
+  "devDependencies": {
+    "playwright": "1.62.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "typescript": "5.9.3",
+    "esbuild": "0.28.2"
+  }
 }

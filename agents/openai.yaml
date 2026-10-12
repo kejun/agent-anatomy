@@ -1,13 +1,13 @@
 interface:
-  display_name: Agent Anatomy
-  short_description: 将技术概念、代码架构和执行追踪转为可交互的机械解剖图
-  default_prompt: 用 $agent-anatomy 将这个 Agent 或软件系统解释为可离线打开的单 HTML 机械解剖图。
-  icon_small: assets/icon.svg
-  icon_large: assets/icon.svg
+  display_name: "Agent Anatomy"
+  short_description: "使用原版 Anatomy 绘图库，按主题定制精密、可交互的机械解剖图"
+  default_prompt: "用 $agent-anatomy 按原版 Anatomy 的制作和验收标准，将这个机制做成精密、可交互的离线机械解剖图。"
+  icon_small: "assets/icon.svg"
+  icon_large: "assets/icon.svg"
 policy:
   products:
-  - chatgpt
-  - codex
-  - api
-  - atlas
+    - "chatgpt"
+    - "codex"
+    - "api"
+    - "atlas"
   allow_implicit_invocation: true

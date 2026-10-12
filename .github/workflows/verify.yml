@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: node scripts/self-test.mjs
+      - run: npm test
   browser:
     name: browser
     runs-on: ubuntu-latest
@@ -39,3 +39,28 @@ jobs:
         with:
           name: browser-qa
           path: qa-output/
+  upstream:
+    name: Anatomy regression
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:upstream
+      - run: node scripts/verify-upstream.mjs
+  examples:
+    name: Anatomy example fidelity
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run build:examples
+      - run: git diff --exit-code -- examples/
