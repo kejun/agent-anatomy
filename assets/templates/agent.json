@@ -1,0 +1,532 @@
+{
+  "schemaVersion": 1,
+  "title": "Agent 的执行工作台",
+  "summary": "一张工单如何经过调度、推理、记忆和工具，再形成可检查的结果。点击机器查看输入输出，进入控制台可拆开内部机制。",
+  "template": "agent",
+  "mode": "demo",
+  "theme": "light",
+  "sources": [
+    {
+      "id": "scenario",
+      "title": "内置合成教学场景",
+      "ref": "本页为一般机制示例，不代表任何真实项目或实际性能。"
+    }
+  ],
+  "domains": [
+    {
+      "id": "control",
+      "name": "调度",
+      "description": "管理任务与下一步决策。"
+    },
+    {
+      "id": "reasoning",
+      "name": "推理与记忆",
+      "description": "上下文与模型处理。"
+    },
+    {
+      "id": "execution",
+      "name": "工具与结果",
+      "description": "调用外部能力并形成输出。"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "queue",
+      "domainId": "control",
+      "label": "任务料仓",
+      "kind": "queue",
+      "description": "待处理任务进入料仓，调度器逐项取出。",
+      "inputs": [
+        "目标与约束"
+      ],
+      "outputs": [
+        "待执行工单"
+      ],
+      "behaviour": "料仓表达等待，不代表同时运行的 Agent 数量。",
+      "evidence": "demo",
+      "sources": [],
+      "mechanism": {
+        "capacity": 8
+      }
+    },
+    {
+      "id": "controller",
+      "domainId": "control",
+      "label": "调度控制台",
+      "kind": "console",
+      "description": "根据目标、上下文和工具结果决定下一步动作。",
+      "inputs": [
+        "工单",
+        "工具结果"
+      ],
+      "outputs": [
+        "模型请求",
+        "工具指令",
+        "完成判断"
+      ],
+      "behaviour": "控制循环在决策、执行和核对之间往返。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "memory",
+      "domainId": "reasoning",
+      "label": "上下文转盘",
+      "kind": "memory",
+      "description": "为下一次决策提供当前任务所需的上下文。",
+      "inputs": [
+        "任务历史",
+        "已确认结果"
+      ],
+      "outputs": [
+        "决策上下文"
+      ],
+      "behaviour": "转盘代表上下文存取；长期存储是否存在需另行证实。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "model",
+      "domainId": "reasoning",
+      "label": "推理机芯",
+      "kind": "processor",
+      "description": "处理上下文，提出下一步操作或回答。",
+      "inputs": [
+        "目标",
+        "上下文",
+        "工具定义"
+      ],
+      "outputs": [
+        "候选工具调用",
+        "回答草稿"
+      ],
+      "behaviour": "活动灯表示当前步骤；没有导入记录时不显示真实用量。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "tools",
+      "domainId": "execution",
+      "label": "工具机械臂",
+      "kind": "tool",
+      "description": "执行被选择的工具，并返回结果或错误。",
+      "inputs": [
+        "工具名与参数"
+      ],
+      "outputs": [
+        "执行结果",
+        "错误记录"
+      ],
+      "behaviour": "工具结果回到控制台。失败是否重试由具体策略决定。",
+      "evidence": "demo",
+      "sources": [],
+      "mechanism": {
+        "concurrency": 1,
+        "retryLimit": 1
+      }
+    },
+    {
+      "id": "result",
+      "domainId": "execution",
+      "label": "结果校验台",
+      "kind": "display",
+      "description": "将经过核对的内容交付给用户。",
+      "inputs": [
+        "回答草稿",
+        "核对结果"
+      ],
+      "outputs": [
+        "最终结果"
+      ],
+      "behaviour": "完成并不等于正确，核对所依据的证据应可见。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "planner",
+      "domainId": "control",
+      "label": "下一步选择",
+      "kind": "router",
+      "description": "选择继续推理、调用工具或完成任务。",
+      "inputs": [
+        "当前上下文"
+      ],
+      "outputs": [
+        "动作选择"
+      ],
+      "behaviour": "只表达决策职责，不保证存在独立规划模型。",
+      "evidence": "demo",
+      "sources": [],
+      "parentId": "controller"
+    },
+    {
+      "id": "checker",
+      "domainId": "control",
+      "label": "完成核对",
+      "kind": "console",
+      "description": "检查目标与约束是否满足。",
+      "inputs": [
+        "执行结果",
+        "验收条件"
+      ],
+      "outputs": [
+        "继续或完成"
+      ],
+      "behaviour": "核对依据来自目标和可用证据。",
+      "evidence": "demo",
+      "sources": [],
+      "parentId": "controller"
+    }
+  ],
+  "edges": [
+    {
+      "id": "q-c",
+      "from": "queue",
+      "to": "controller",
+      "label": "取出工单",
+      "kind": "control",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "c-mem",
+      "from": "controller",
+      "to": "memory",
+      "label": "读取上下文",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "mem-model",
+      "from": "memory",
+      "to": "model",
+      "label": "提供上下文",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "model-c",
+      "from": "model",
+      "to": "controller",
+      "label": "提交动作",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "c-t",
+      "from": "controller",
+      "to": "tools",
+      "label": "执行指令",
+      "kind": "control",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "t-c",
+      "from": "tools",
+      "to": "controller",
+      "label": "结果反馈",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "c-r",
+      "from": "controller",
+      "to": "result",
+      "label": "完成交付",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "p-k",
+      "from": "planner",
+      "to": "checker",
+      "label": "核对候选动作",
+      "kind": "control",
+      "evidence": "demo",
+      "sources": []
+    }
+  ],
+  "steps": [
+    {
+      "id": "queued",
+      "title": "工单进入料仓",
+      "description": "先明确目标和约束，再选择下一张工单。",
+      "active": [
+        "queue"
+      ],
+      "edges": [
+        "q-c"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 1,
+          "action": "enqueue"
+        },
+        "tools": {
+          "activeWorkers": 0,
+          "retries": 0,
+          "action": "idle"
+        }
+      }
+    },
+    {
+      "id": "context",
+      "title": "补齐当前上下文",
+      "description": "调度控制台读取任务历史；记忆不等于无限上下文。",
+      "active": [
+        "controller",
+        "memory"
+      ],
+      "edges": [
+        "c-mem"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 0,
+          "action": "dequeue"
+        },
+        "tools": {
+          "activeWorkers": 0,
+          "retries": 0,
+          "action": "idle"
+        },
+        "memory": {
+          "action": "read"
+        }
+      }
+    },
+    {
+      "id": "reason",
+      "title": "生成候选动作",
+      "description": "推理机芯基于上下文提出动作；此处是合成演示。",
+      "active": [
+        "model",
+        "memory"
+      ],
+      "edges": [
+        "mem-model",
+        "model-c"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 0,
+          "action": "idle"
+        },
+        "tools": {
+          "activeWorkers": 0,
+          "retries": 0,
+          "action": "idle"
+        }
+      }
+    },
+    {
+      "id": "execute",
+      "title": "让工具执行动作",
+      "description": "控制台分发指令，机械臂执行具体能力。",
+      "active": [
+        "controller",
+        "tools"
+      ],
+      "edges": [
+        "c-t"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 0,
+          "action": "idle"
+        },
+        "tools": {
+          "activeWorkers": 1,
+          "retries": 0,
+          "action": "process"
+        }
+      }
+    },
+    {
+      "id": "feedback",
+      "title": "工具结果回到控制台",
+      "description": "结果或错误成为下一步决策的输入。",
+      "active": [
+        "tools",
+        "controller"
+      ],
+      "edges": [
+        "t-c"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 0,
+          "action": "idle"
+        },
+        "tools": {
+          "activeWorkers": 0,
+          "retries": 0,
+          "action": "complete"
+        }
+      }
+    },
+    {
+      "id": "verify",
+      "title": "核对是否可以完成",
+      "description": "进入调度控制台，查看下一步选择和完成核对。",
+      "active": [
+        "checker"
+      ],
+      "edges": [
+        "p-k"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 0,
+          "action": "idle"
+        },
+        "tools": {
+          "activeWorkers": 0,
+          "retries": 0,
+          "action": "complete"
+        }
+      }
+    },
+    {
+      "id": "deliver",
+      "title": "交付可检查的结果",
+      "description": "输出与完成判断分开表示，不把流畅回答当成已验证。",
+      "active": [
+        "result"
+      ],
+      "edges": [
+        "c-r"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 0,
+          "action": "idle"
+        },
+        "tools": {
+          "activeWorkers": 0,
+          "retries": 0,
+          "action": "complete"
+        }
+      }
+    }
+  ],
+  "exampleTrace": {
+    "synthetic": true,
+    "spans": [
+      {
+        "id": "s1",
+        "traceId": "synthetic-agent",
+        "name": "controller",
+        "nodeId": "controller",
+        "startMs": 0,
+        "endMs": 1740,
+        "status": "ok",
+        "attributes": {
+          "scenario": "合成演示",
+          "operation": "control-loop"
+        }
+      },
+      {
+        "id": "s2",
+        "traceId": "synthetic-agent",
+        "parentId": "s1",
+        "name": "memory",
+        "nodeId": "memory",
+        "startMs": 20,
+        "endMs": 160,
+        "status": "ok",
+        "attributes": {
+          "operation": "context-read"
+        }
+      },
+      {
+        "id": "s3",
+        "traceId": "synthetic-agent",
+        "parentId": "s1",
+        "name": "model",
+        "nodeId": "model",
+        "startMs": 180,
+        "endMs": 680,
+        "status": "ok",
+        "attributes": {
+          "gen_ai.usage.input_tokens": 550,
+          "gen_ai.usage.output_tokens": 120
+        }
+      },
+      {
+        "id": "s4",
+        "traceId": "synthetic-agent",
+        "parentId": "s1",
+        "name": "tools",
+        "nodeId": "tools",
+        "startMs": 700,
+        "endMs": 930,
+        "status": "error",
+        "attributes": {
+          "tool": "example_lookup",
+          "error": "合成错误：请求暂时失败",
+          "retry": 0
+        }
+      },
+      {
+        "id": "s5",
+        "traceId": "synthetic-agent",
+        "parentId": "s1",
+        "name": "external-event",
+        "startMs": 880,
+        "endMs": 910,
+        "status": "unknown",
+        "attributes": {
+          "note": "没有业务域标识，保留在未归属"
+        }
+      },
+      {
+        "id": "s6",
+        "traceId": "synthetic-agent",
+        "parentId": "s1",
+        "name": "model",
+        "nodeId": "model",
+        "startMs": 960,
+        "endMs": 1320,
+        "status": "ok",
+        "attributes": {
+          "gen_ai.usage.input_tokens": 200,
+          "gen_ai.usage.output_tokens": 45
+        }
+      },
+      {
+        "id": "s7",
+        "traceId": "synthetic-agent",
+        "parentId": "s1",
+        "name": "tools",
+        "nodeId": "tools",
+        "startMs": 1320,
+        "endMs": 1580,
+        "status": "ok",
+        "attributes": {
+          "tool": "example_lookup",
+          "retry": 1
+        }
+      },
+      {
+        "id": "s8",
+        "traceId": "synthetic-agent",
+        "parentId": "s1",
+        "name": "result",
+        "nodeId": "result",
+        "startMs": 1580,
+        "endMs": 1740,
+        "status": "ok",
+        "attributes": {
+          "operation": "deliver"
+        }
+      }
+    ]
+  }
+}

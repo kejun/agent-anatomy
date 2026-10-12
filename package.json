@@ -1,0 +1,13 @@
+{
+  "name": "agent-anatomy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline interactive mechanical anatomy diagrams and trace replay",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node scripts/self-test.mjs",
+    "test:browser": "node scripts/browser-test.mjs"
+  },
+  "devDependencies": { "playwright": "1.62.1" }
+}

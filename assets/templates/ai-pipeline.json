@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 1,
+  "title": "语音 AI 的处理装置",
+  "summary": "采音、识别、翻译、知识整理和播报有各自的输入输出。译文显示与播报是两条输出路径；实际并发、定稿和重试规则需要项目证据。",
+  "template": "ai-pipeline",
+  "mode": "demo",
+  "theme": "light",
+  "sources": [
+    {
+      "id": "scenario",
+      "title": "内置合成教学场景",
+      "ref": "本页为一般机制示例，不代表任何真实项目或实际性能。"
+    }
+  ],
+  "domains": [
+    {
+      "id": "capture",
+      "name": "采集与识别",
+      "description": "从声音到文本。"
+    },
+    {
+      "id": "language",
+      "name": "语言与知识",
+      "description": "翻译和整理。"
+    },
+    {
+      "id": "delivery",
+      "name": "显示与播报",
+      "description": "不同输出路径。"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "sensor",
+      "domainId": "capture",
+      "label": "采音探头",
+      "kind": "sensor",
+      "description": "将声音作为后续识别的输入。",
+      "inputs": [
+        "声音"
+      ],
+      "outputs": [
+        "音频片段"
+      ],
+      "behaviour": "不把装饰波形当成实际输入音频。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "asr",
+      "domainId": "capture",
+      "label": "识别机芯",
+      "kind": "processor",
+      "description": "将音频转换为文本。",
+      "inputs": [
+        "音频片段"
+      ],
+      "outputs": [
+        "原文文本"
+      ],
+      "behaviour": "时间戳、临时结果和定稿行为须按具体服务改写。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "translation",
+      "domainId": "language",
+      "label": "翻译控制台",
+      "kind": "console",
+      "description": "把原文转换为译文。",
+      "inputs": [
+        "原文",
+        "上下文"
+      ],
+      "outputs": [
+        "译文"
+      ],
+      "behaviour": "翻译步骤不代表采用某个特定模型。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "knowledge",
+      "domainId": "language",
+      "label": "知识转盘",
+      "kind": "memory",
+      "description": "将可用文本整理为条目。",
+      "inputs": [
+        "文本"
+      ],
+      "outputs": [
+        "知识条目"
+      ],
+      "behaviour": "有证据才能生成关系；没有关系不是失败。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "tts",
+      "domainId": "delivery",
+      "label": "播报扬声器",
+      "kind": "speaker",
+      "description": "将可播报文本转换为声音。",
+      "inputs": [
+        "可播报文本"
+      ],
+      "outputs": [
+        "语音"
+      ],
+      "behaviour": "是否提前播报取决于实际策略。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "display",
+      "domainId": "delivery",
+      "label": "字幕展示台",
+      "kind": "display",
+      "description": "将文本作为可阅读的输出。",
+      "inputs": [
+        "原文",
+        "译文"
+      ],
+      "outputs": [
+        "屏幕字幕"
+      ],
+      "behaviour": "显示与播报是不同消费者。",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "context",
+      "domainId": "language",
+      "label": "上下文输入",
+      "kind": "queue",
+      "description": "提供翻译所需的已确认上下文。",
+      "inputs": [
+        "已确认文本"
+      ],
+      "outputs": [
+        "上下文"
+      ],
+      "behaviour": "保留上下文范围与限制。",
+      "evidence": "demo",
+      "sources": [],
+      "parentId": "translation"
+    },
+    {
+      "id": "language-model",
+      "domainId": "language",
+      "label": "语言处理芯",
+      "kind": "processor",
+      "description": "生成译文。",
+      "inputs": [
+        "原文",
+        "上下文"
+      ],
+      "outputs": [
+        "译文"
+      ],
+      "behaviour": "具体模型调用需源码证据。",
+      "evidence": "demo",
+      "sources": [],
+      "parentId": "translation"
+    }
+  ],
+  "edges": [
+    {
+      "id": "audio",
+      "from": "sensor",
+      "to": "asr",
+      "label": "音频",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "original",
+      "from": "asr",
+      "to": "translation",
+      "label": "原文",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "translated",
+      "from": "translation",
+      "to": "display",
+      "label": "显示译文",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "speech",
+      "from": "translation",
+      "to": "tts",
+      "label": "播报文本",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "extract",
+      "from": "translation",
+      "to": "knowledge",
+      "label": "整理文本",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    },
+    {
+      "id": "ctx",
+      "from": "context",
+      "to": "language-model",
+      "label": "翻译上下文",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": []
+    }
+  ],
+  "steps": [
+    {
+      "id": "capture",
+      "title": "采集声音",
+      "description": "声音先进入识别链路。",
+      "active": [
+        "sensor"
+      ],
+      "edges": [
+        "audio"
+      ]
+    },
+    {
+      "id": "recognize",
+      "title": "形成原文文本",
+      "description": "识别输出是后续处理的输入。",
+      "active": [
+        "asr"
+      ],
+      "edges": [
+        "original"
+      ]
+    },
+    {
+      "id": "translate",
+      "title": "在上下文中翻译",
+      "description": "进入翻译控制台可查看内部输入和机芯。",
+      "active": [
+        "translation",
+        "language-model"
+      ],
+      "edges": [
+        "ctx"
+      ]
+    },
+    {
+      "id": "show",
+      "title": "显示译文",
+      "description": "显示路径可以独立于播报路径工作。",
+      "active": [
+        "display"
+      ],
+      "edges": [
+        "translated"
+      ]
+    },
+    {
+      "id": "speak",
+      "title": "产生播报语音",
+      "description": "本演示用步骤表示因果，不模拟实际音频。",
+      "active": [
+        "tts"
+      ],
+      "edges": [
+        "speech"
+      ]
+    },
+    {
+      "id": "organize",
+      "title": "整理知识",
+      "description": "只整理有文本依据的信息，不强求关系。",
+      "active": [
+        "knowledge"
+      ],
+      "edges": [
+        "extract"
+      ]
+    }
+  ]
+}

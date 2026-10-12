@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 1,
+  "title": "有界队列与一次重试",
+  "summary": "合成教学场景：队列容量 8，工位并发 2；队满拒绝新任务。任务 A 失败后最多重试一次，再次失败进入错误出口。数字是完整步骤快照，不代表实测性能。",
+  "template": "agent",
+  "mode": "demo",
+  "sources": [
+    {
+      "id": "scenario",
+      "title": "内置合成排队与重试场景",
+      "ref": "容量 8、并发 2、重试上限 1 为本教学场景的设定。"
+    }
+  ],
+  "domains": [
+    {
+      "id": "work",
+      "name": "任务处理",
+      "description": "等待、并行处理、拒绝与失败出口。"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "queue",
+      "domainId": "work",
+      "label": "等待料仓",
+      "kind": "queue",
+      "description": "等待任务与运行任务分开计数；队列满时不接收新任务。",
+      "inputs": [
+        "合成任务"
+      ],
+      "outputs": [
+        "处理状态"
+      ],
+      "behaviour": "等待任务与运行任务分开计数；队列满时不接收新任务。",
+      "evidence": "demo",
+      "sources": [
+        "scenario"
+      ],
+      "mechanism": {
+        "capacity": 8
+      }
+    },
+    {
+      "id": "workers",
+      "domainId": "work",
+      "label": "双工位",
+      "kind": "processor",
+      "description": "两个工位处理独立任务。重试拨盘仅表示任务 A 的累计重试次数；任务 A 原位重试。",
+      "inputs": [
+        "合成任务"
+      ],
+      "outputs": [
+        "处理状态"
+      ],
+      "behaviour": "两个工位处理独立任务。重试拨盘仅表示任务 A 的累计重试次数；任务 A 原位重试。",
+      "evidence": "demo",
+      "sources": [
+        "scenario"
+      ],
+      "mechanism": {
+        "concurrency": 2,
+        "retryLimit": 1
+      }
+    },
+    {
+      "id": "failure",
+      "domainId": "work",
+      "label": "错误出口",
+      "kind": "display",
+      "description": "任务 A 第二次失败后离开工位，计入失败数。",
+      "inputs": [
+        "合成任务"
+      ],
+      "outputs": [
+        "处理状态"
+      ],
+      "behaviour": "任务 A 第二次失败后离开工位，计入失败数。",
+      "evidence": "demo",
+      "sources": [
+        "scenario"
+      ]
+    },
+    {
+      "id": "rejection",
+      "domainId": "work",
+      "label": "拒绝出口",
+      "kind": "display",
+      "description": "队列满时拒绝新增任务，保持队列数量为 8。",
+      "inputs": [
+        "合成任务"
+      ],
+      "outputs": [
+        "处理状态"
+      ],
+      "behaviour": "队列满时拒绝新增任务，保持队列数量为 8。",
+      "evidence": "demo",
+      "sources": [
+        "scenario"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "dispatch",
+      "from": "queue",
+      "to": "workers",
+      "label": "调度到空闲工位",
+      "kind": "control",
+      "evidence": "demo",
+      "sources": [
+        "scenario"
+      ]
+    },
+    {
+      "id": "failed",
+      "from": "workers",
+      "to": "failure",
+      "label": "达到重试上限后退出",
+      "kind": "data",
+      "evidence": "demo",
+      "sources": [
+        "scenario"
+      ]
+    },
+    {
+      "id": "reject",
+      "from": "queue",
+      "to": "rejection",
+      "label": "队满拒绝新任务",
+      "kind": "control",
+      "evidence": "demo",
+      "sources": [
+        "scenario"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "id": "empty",
+      "title": "空队列",
+      "description": "尚未接收任务，两个工位空闲。",
+      "active": [],
+      "edges": [],
+      "states": {
+        "queue": {
+          "queueDepth": 0,
+          "action": "idle"
+        },
+        "workers": {
+          "activeWorkers": 0,
+          "retries": 0,
+          "completed": 0,
+          "action": "idle"
+        },
+        "failure": {
+          "failed": 0,
+          "action": "idle"
+        },
+        "rejection": {
+          "rejected": 0,
+          "action": "idle"
+        }
+      }
+    },
+    {
+      "id": "arrive",
+      "title": "8 个任务进入料仓",
+      "description": "队列由 0 增加为 8；运行数量仍为 0。",
+      "active": [
+        "queue"
+      ],
+      "edges": [],
+      "states": {
+        "queue": {
+          "queueDepth": 8,
+          "action": "enqueue"
+        },
+        "workers": {
+          "activeWorkers": 0,
+          "retries": 0,
+          "completed": 0,
+          "action": "idle"
+        },
+        "failure": {
+          "failed": 0,
+          "action": "idle"
+        },
+        "rejection": {
+          "rejected": 0,
+          "action": "idle"
+        }
+      }
+    },
+    {
+      "id": "full",
+      "title": "第 9 个任务被拒绝",
+      "description": "队列已满，拒绝 1 个新任务；等待数保持 8。",
+      "active": [
+        "rejection"
+      ],
+      "edges": [
+        "reject"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 8,
+          "action": "idle"
+        },
+        "workers": {
+          "activeWorkers": 0,
+          "retries": 0,
+          "completed": 0,
+          "action": "idle"
+        },
+        "failure": {
+          "failed": 0,
+          "action": "idle"
+        },
+        "rejection": {
+          "rejected": 1,
+          "action": "reject"
+        }
+      }
+    },
+    {
+      "id": "dispatch",
+      "title": "两个工位同时执行",
+      "description": "任务 A、B 出队；等待数从 8 降为 6，占用两个工位。",
+      "active": [
+        "queue",
+        "workers"
+      ],
+      "edges": [
+        "dispatch"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 6,
+          "action": "dequeue"
+        },
+        "workers": {
+          "activeWorkers": 2,
+          "retries": 0,
+          "completed": 0,
+          "action": "process"
+        },
+        "failure": {
+          "failed": 0,
+          "action": "idle"
+        },
+        "rejection": {
+          "rejected": 1,
+          "action": "idle"
+        }
+      }
+    },
+    {
+      "id": "first-failure",
+      "title": "任务 A 首次失败",
+      "description": "A 暂停但保留原工位，B 继续运行；两个工位仍被占用。A 尚未重试，重试次数为 0。",
+      "active": [
+        "workers"
+      ],
+      "edges": [],
+      "states": {
+        "queue": {
+          "queueDepth": 6,
+          "action": "idle"
+        },
+        "workers": {
+          "activeWorkers": 2,
+          "retries": 0,
+          "completed": 0,
+          "action": "error"
+        },
+        "failure": {
+          "failed": 0,
+          "action": "idle"
+        },
+        "rejection": {
+          "rejected": 1,
+          "action": "idle"
+        }
+      }
+    },
+    {
+      "id": "retry",
+      "title": "任务 A 进行唯一一次重试",
+      "description": "A 原位重试，B 继续；重试拨盘从 0 转到 1，等待数不变。",
+      "active": [
+        "workers"
+      ],
+      "edges": [],
+      "states": {
+        "queue": {
+          "queueDepth": 6,
+          "action": "idle"
+        },
+        "workers": {
+          "activeWorkers": 2,
+          "retries": 1,
+          "completed": 0,
+          "action": "retry"
+        },
+        "failure": {
+          "failed": 0,
+          "action": "idle"
+        },
+        "rejection": {
+          "rejected": 1,
+          "action": "idle"
+        }
+      }
+    },
+    {
+      "id": "retry-failed",
+      "title": "重试失败后退出",
+      "description": "A 第二次失败，进入错误出口，禁止再重试；B 仍运行。",
+      "active": [
+        "failure",
+        "workers"
+      ],
+      "edges": [
+        "failed"
+      ],
+      "states": {
+        "queue": {
+          "queueDepth": 6,
+          "action": "idle"
+        },
+        "workers": {
+          "activeWorkers": 1,
+          "retries": 1,
+          "completed": 0,
+          "action": "error"
+        },
+        "failure": {
+          "failed": 1,
+          "action": "error"
+        },
+        "rejection": {
+          "rejected": 1,
+          "action": "idle"
+        }
+      }
+    },
+    {
+      "id": "finish",
+      "title": "任务 B 完成",
+      "description": "B 成功结束，工位占用归零。仍有 6 个等待任务，本演示在此暂停调度。",
+      "active": [],
+      "edges": [],
+      "states": {
+        "queue": {
+          "queueDepth": 6,
+          "action": "idle"
+        },
+        "workers": {
+          "activeWorkers": 0,
+          "retries": 1,
+          "completed": 1,
+          "action": "complete"
+        },
+        "failure": {
+          "failed": 1,
+          "action": "idle"
+        },
+        "rejection": {
+          "rejected": 1,
+          "action": "idle"
+        }
+      }
+    }
+  ]
+}
