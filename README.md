@@ -86,7 +86,7 @@ npm run build:examples
 
 - npm test：逐文件核对原版完整性，以及 Trace Explorer 的数据检查。
 - test:browser：兼容工具的浏览器交互检查。
-- test:upstream：原版全部回归测试；CHROME_PATH 可指定已有 Chromium。
+- test:upstream：原版全部回归测试，默认使用 Playwright 的无头浏览器；CHROME_PATH 可指定已有 Chromium。
 - build:examples：在临时目录重建原版全部独立示例，并核对生成 HTML 与原版基线完全一致，不改写仓库中的示例。
 
 逐字节重建采用与上游 CI 一致的 macOS + Node 22。Linux 下已确认部分三角函数结果的最后一位会不同，影响发动机及 3D 压力示例的序列化字节；因此其他环境运行 build:examples 可能报告哈希差异。仓库内附页面始终保留原版字节，普通构建和使用不受这一环境要求限制。

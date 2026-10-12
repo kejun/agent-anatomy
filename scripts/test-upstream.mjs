@@ -8,7 +8,9 @@ const files=(await readdir(resolve(root,'scripts'))).filter(f=>f.endsWith('.test
 const env={...process.env,NODE_PATH:[resolve(root,'node_modules'),process.env.NODE_PATH].filter(Boolean).join(delimiter)};
 if(!env.CHROME_PATH){
   const {chromium}=await import('playwright');
-  env.CHROME_PATH=chromium.executablePath();
+  const browser=await chromium.launchServer({headless:true});
+  try{env.CHROME_PATH=browser.process().spawnfile;}
+  finally{await browser.close();}
 }
 const child=spawn(process.execPath,['--test','--test-concurrency=1',...files],{cwd:root,env,stdio:'inherit'});
 child.on('error',error=>{console.error(error);process.exitCode=1;});
